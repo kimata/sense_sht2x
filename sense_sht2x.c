@@ -97,20 +97,22 @@ int exec_command(int fd, SHT2x_COMMAND cmd, uint16_t *value)
     case CMD_TRIG_TEMP_POLL:
     case CMD_TRIG_HUMI_POLL:
     case CMD_SOFT_RESET:
-	if ((write(fd, &cmd, 1)) != 1) {
-	    fprintf(stderr, "ERROR: i2c write\n");
-	    return -1;
-	}
-	break;
+        if ((write(fd, &cmd, 1)) != 1) {
+            fprintf(stderr, "ERROR: i2c write\n");
+            exit(EXIT_FAILURE);
+        }
+        break;
     case CMD_MEASURE_READ:
-	if (exec_measure_read(fd, cmd, value) == -1) {
-	    return -1;
-	}
+        if (exec_measure_read(fd, cmd, value) == -1) {
+            exit(EXIT_FAILURE);
+
+        }
 	break;
     case CMD_USER_REG_WRITE:
     case CMD_USER_REG_READ:
-	fprintf(stderr, "ERROR: NOT implemented\n");
-	break;
+        fprintf(stderr, "ERROR: NOT implemented\n");
+        exit(EXIT_FAILURE);
+        break;
     }
     usleep(10000); // wait 10ms
 
@@ -120,8 +122,8 @@ int exec_command(int fd, SHT2x_COMMAND cmd, uint16_t *value)
 float calc_temp(uint16_t value)
 {
     if ((value & 0x2) != 0) {
-	fprintf(stderr, "ERROR: invalid value\n");
-	return -1;
+        fprintf(stderr, "ERROR: invalid value\n");
+        exit(EXIT_FAILURE);
     }
     return -46.85 + (175.72 * (value & 0xFFFC)) / (1 << 16);
 }
@@ -129,8 +131,8 @@ float calc_temp(uint16_t value)
 float calc_humi(uint16_t value)
 {
     if ((value & 0x2) == 0) {
-	fprintf(stderr, "ERROR: invalid value\n");
-	return -1;
+        fprintf(stderr, "ERROR: invalid value\n");
+        exit(EXIT_FAILURE);
     }
     
     return -6 + (125.0 * (value & 0xFFFC)) / (1 << 16);

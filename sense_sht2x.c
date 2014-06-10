@@ -26,7 +26,7 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 
-#define VERSION				"0.0.1"
+#define VERSION             "0.0.1"
 
 #define I2C_DEV_ADDR        0x40
 #define CRC_POLY            0x131   // P(x)=x^8+x^5+x^4+1 = 100110001
@@ -35,7 +35,7 @@
 typedef enum {
     CMD_TRIG_TEMP_POLL      = 0xF3, // command trig. temp meas. no hold master
     CMD_TRIG_HUMI_POLL      = 0xF5, // command trig. humidity meas. no hold master
-    CMD_USER_REG_WRITE	    = 0xE6, // command writing user register
+    CMD_USER_REG_WRITE      = 0xE6, // command writing user register
     CMD_USER_REG_READ       = 0xE7, // command reading user register
     CMD_SOFT_RESET          = 0xFE, // command soft reset
     CMD_MEASURE_READ        = 0x00, // read measured value (for software convenience)
@@ -57,10 +57,10 @@ uint8_t calc_crc(uint8_t data[], uint8_t size)
     uint16_t crc = 0;
 
     for (uint8_t i = 0; i < size; i++) {
-	crc ^= (data[i]);
-	for (uint8_t j = 0; j < 8; j++) {
-	    crc = (crc & 0x80) ? ((crc << 1) ^ CRC_POLY) : (crc << 1);
-	}
+    crc ^= (data[i]);
+    for (uint8_t j = 0; j < 8; j++) {
+        crc = (crc & 0x80) ? ((crc << 1) ^ CRC_POLY) : (crc << 1);
+    }
     }
     return crc;
 }
@@ -75,20 +75,20 @@ int exec_measure_read(int fd, SHT2x_COMMAND cmd, uint16_t *value)
     uint8_t buf[3];
 
     for (uint8_t i = 0; i < 2; i++) {
-	if (read(fd, buf, 3) != 3) { 
-	    usleep(MEASURE_RETRY_WAIT);
-	    continue;
-	}
-	if (check_crc(buf, 2, buf[2])) { 
-	    fprintf(stderr, "ERROR: CRC validation\n");
-	    return -1;
-	}
-	if (value == NULL) {
-	    fprintf(stderr, "ERROR: invalid function call\n");
-	    return -1;
-	}
-	*value = buf[0] << 8 | buf[1];
-	return 0;
+    if (read(fd, buf, 3) != 3) { 
+        usleep(MEASURE_RETRY_WAIT);
+        continue;
+    }
+    if (check_crc(buf, 2, buf[2])) { 
+        fprintf(stderr, "ERROR: CRC validation\n");
+        return -1;
+    }
+    if (value == NULL) {
+        fprintf(stderr, "ERROR: invalid function call\n");
+        return -1;
+    }
+    *value = buf[0] << 8 | buf[1];
+    return 0;
     }
     fprintf(stderr, "ERROR: i2c read\n");
     return -1;
@@ -110,7 +110,7 @@ int exec_command(int fd, SHT2x_COMMAND cmd, uint16_t *value)
             exit(EXIT_FAILURE);
 
         }
-	break;
+    break;
     case CMD_USER_REG_WRITE:
     case CMD_USER_REG_READ:
         fprintf(stderr, "ERROR: NOT implemented\n");
@@ -179,10 +179,10 @@ int exec_sense(uint8_t bus, uint8_t show_temp, uint8_t show_humi)
 
 int main(int argc, char **argv) {
     struct option long_opts[] = {
-        { "bus",      		1, NULL, 'b'  },
+        { "bus",            1, NULL, 'b'  },
         { "temperature",    0, NULL, 'T' },
-        { "humidity",    	0, NULL, 'H' },
-        { "version", 		0, NULL, 'v' },
+        { "humidity",       0, NULL, 'H' },
+        { "version",        0, NULL, 'v' },
         {0, 0, 0, 0}
     };
 

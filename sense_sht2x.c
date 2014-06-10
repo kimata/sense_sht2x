@@ -19,11 +19,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <getopt.h>
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+
+#define VERSION				"0.0.1"
 
 #define I2C_DEV_ADDR        0x40
 #define CRC_POLY            0x131   // P(x)=x^8+x^5+x^4+1 = 100110001
@@ -138,16 +141,11 @@ float calc_humi(uint16_t value)
     return -6 + (125.0 * (value & 0xFFFC)) / (1 << 16);
 }
 
-int main(int argc, char **argv) {
-    int fd; 
-    uint8_t bus;
+int exec_sense(uint8_t bus, uint8_t show_temp, uint8_t show_humi)
+{
+    int fd;
     char i2c_dev_path[64];
     uint16_t temp, humi;
-
-    bus = 0;
-    if (argc != 1) {
-        bus = (unsigned char)strtol(argv[1], NULL, 0);
-    }
 
     sprintf(i2c_dev_path, "/dev/i2c-%d", bus);
     if ((fd = open(i2c_dev_path, O_RDWR)) < 0) {
@@ -168,10 +166,51 @@ int main(int argc, char **argv) {
     exec_command(fd, CMD_TRIG_HUMI_POLL, NULL);
     exec_command(fd, CMD_MEASURE_READ, &humi);
 
-    printf("TEMP:%.2f\n", calc_temp(temp));
-    printf("HUMI: %.2f\n", calc_humi(humi));
-
+    if ((show_temp == 1) && (show_humi == 0)) {
+        printf("%.2f\n", calc_temp(temp));
+    } else if ((show_temp == 0) && (show_humi == 1)) {
+        printf("%.2f\n", calc_humi(humi));
+    } else {
+        printf("TEMP: %.2f\n", calc_temp(temp));
+        printf("HUMI: %.2f\n", calc_humi(humi));
+    }
     return EXIT_SUCCESS;
+}
+
+int main(int argc, char **argv) {
+    struct option long_opts[] = {
+        { "bus",      		1, NULL, 'b'  },
+        { "temperature",    0, NULL, 'T' },
+        { "humidity",    	0, NULL, 'H' },
+        { "version", 		0, NULL, 'v' },
+        {0, 0, 0, 0}
+    };
+
+    int opt_index = 0;
+    int result = 0;
+    uint8_t bus = 1;
+    uint8_t show_temp = 0;
+    uint8_t show_humi = 0;
+
+    while ((result = getopt_long(argc, argv, "b:THv",
+                                 long_opts, &opt_index)) != -1) {
+        switch (result) {
+        case 'b':
+            bus = (uint8_t)(atoi(optarg) & 0xFF);
+            break;
+        case 'T':
+            show_temp = 1;
+            break;
+        case 'H':
+            show_humi = 1;
+            break;
+        case 'v':
+            printf("sense_sht2x version %s. (build: %s)\n", VERSION,  __TIMESTAMP__);
+            return EXIT_SUCCESS;
+        }
+    }
+
+    return exec_sense(bus, show_temp, show_humi);
 }
 
 // Local Variables:
